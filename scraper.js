@@ -1,4 +1,4 @@
-const { chromium } = require('patchright');
+﻿const { chromium } = require('patchright');
 const fs = require('fs');
 const path = require('path');
 
@@ -537,7 +537,7 @@ function parseEngagementNum(str) {
       console.log(`Scroll ${scrollAttempts + 1}: +${newPosts} new (total: ${posts.length}/${collectTarget}) | DOM: ${articlesInDOM}`);
       if (newPosts === 0) {
         consecutiveEmptyScrolls++;
-        if (consecutiveEmptyScrolls >= (isProfileMode ? 10 : 8)) {
+        if (consecutiveEmptyScrolls >= (isProfileMode ? 15 : 12)) {
           console.log(`${consecutiveEmptyScrolls} consecutive empty scrolls — ${isProfileMode ? 'end of profile' : 'moving to next pass'}`);
           break;
         }
@@ -545,11 +545,22 @@ function parseEngagementNum(str) {
         consecutiveEmptyScrolls = 0;
       }
       if (posts.length >= collectTarget) break;
-      const scrollAmount = randInt(800, 2500);
+      const scrollAmount = randInt(1500, 4000);
       await page.mouse.move(randInt(100, 500), randInt(200, 600));
-      await page.waitForTimeout(randInt(200, 500));
+      await page.waitForTimeout(randInt(300, 700));
       await page.evaluate((amt) => window.scrollBy(0, amt), scrollAmount);
-      await randDelay(1200, 3000);
+      await randDelay(2500, 5000);
+      
+      // Wait for new articles to load after scroll
+      try {
+        await page.waitForFunction(
+          (prevCount) => document.querySelectorAll('article').length > prevCount,
+          { timeout: 5000 },
+          articlesInDOM
+        );
+      } catch (e) {
+        // Timeout is fine - just means no new articles loaded
+      }
       scrollAttempts++;
     }
 
@@ -643,3 +654,4 @@ function parseEngagementNum(str) {
   await browser.close();
   if (process.env.X_STATE && fs.existsSync(storageStatePath)) fs.unlinkSync(storageStatePath);
 })();
+
