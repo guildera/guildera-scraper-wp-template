@@ -1,4 +1,4 @@
-﻿const { chromium } = require('patchright');
+const { chromium } = require('patchright');
 const fs = require('fs');
 const path = require('path');
 
@@ -195,7 +195,7 @@ function parseEngagementNum(str) {
   const maxScrollAttempts = Math.max(collectTarget * 4, 80);
   const username = target.replace('@', '').trim();
 
-  // ─── BATCH EXTRACTION: runs entirely in browser, ONE round-trip ───
+  // â”€â”€â”€ BATCH EXTRACTION: runs entirely in browser, ONE round-trip â”€â”€â”€
   async function extractPostsFromDOM() {
     const newPosts = await page.evaluate(({ username, existingIds }) => {
       const articles = document.querySelectorAll('article');
@@ -224,8 +224,8 @@ function parseEngagementNum(str) {
             }
           }
 
-          // Extract real display name from DOM — multiple strategies
-          // Strategy 1: data-testid="User-Name" — first non-@ span
+          // Extract real display name from DOM â€” multiple strategies
+          // Strategy 1: data-testid="User-Name" â€” first non-@ span
           const userNameEl = article.querySelector('div[data-testid="User-Name"]');
           if (userNameEl && !displayName) {
             const spans = userNameEl.querySelectorAll('span');
@@ -237,7 +237,7 @@ function parseEngagementNum(str) {
               }
             }
           }
-          // Strategy 2: Look for user link — first non-@ text inside it
+          // Strategy 2: Look for user link â€” first non-@ text inside it
           if (!displayName) {
             const userLink = article.querySelector('a[href^="/' + username + '"]');
             if (userLink) {
@@ -290,7 +290,7 @@ function parseEngagementNum(str) {
           }
           if (!postTime) postTime = new Date().toISOString();
 
-          // Avatar — try multiple selectors for lazy-loaded images, plus fallback from username
+          // Avatar â€” try multiple selectors for lazy-loaded images, plus fallback from username
           let authorAvatar = '';
           const avatarSelectors = [
             'img[src*="profile_images"]',
@@ -335,7 +335,7 @@ function parseEngagementNum(str) {
           // Verified
           const isVerified = !!article.querySelector('[aria-label="Verified account"], [aria-label="Verified"]');
 
-          // Media — try multiple selectors for lazy-loaded images
+          // Media â€” try multiple selectors for lazy-loaded images
           const mediaUrls = [];
           const mediaSelectors = [
             'img[src*="pbs.twimg.com/media"]',
@@ -411,7 +411,7 @@ function parseEngagementNum(str) {
           if (!bookmarkCount) bookmarkCount = getCountFromTestId('bookmark') || getCountFromTestId('unbookmark');
           if (!quoteCount) quoteCount = getCountFromTestId('quote');
 
-          // Strategy 3: Bookmark-specific — scan all buttons for bookmark count in text/aria-label
+          // Strategy 3: Bookmark-specific â€” scan all buttons for bookmark count in text/aria-label
           if (!bookmarkCount) {
             for (const btn of allBtns) {
               const label = (btn.getAttribute('aria-label') || '').toLowerCase();
@@ -496,7 +496,7 @@ function parseEngagementNum(str) {
     return added;
   }
 
-  // ─── MULTI-PASS SEARCH or PROFILE SCROLL ───
+  // â”€â”€â”€ MULTI-PASS SEARCH or PROFILE SCROLL â”€â”€â”€
   const isProfileMode = sourceType === 'profile_filter' || sourceType === 'user';
   const passes = isProfileMode ? ['profile'] : searchPasses;
 
@@ -537,30 +537,19 @@ function parseEngagementNum(str) {
       console.log(`Scroll ${scrollAttempts + 1}: +${newPosts} new (total: ${posts.length}/${collectTarget}) | DOM: ${articlesInDOM}`);
       if (newPosts === 0) {
         consecutiveEmptyScrolls++;
-        if (consecutiveEmptyScrolls >= (isProfileMode ? 15 : 12)) {
-          console.log(`${consecutiveEmptyScrolls} consecutive empty scrolls — ${isProfileMode ? 'end of profile' : 'moving to next pass'}`);
+        if (consecutiveEmptyScrolls >= (isProfileMode ? 10 : 8)) {
+          console.log(`${consecutiveEmptyScrolls} consecutive empty scrolls â€” ${isProfileMode ? 'end of profile' : 'moving to next pass'}`);
           break;
         }
       } else {
         consecutiveEmptyScrolls = 0;
       }
       if (posts.length >= collectTarget) break;
-      const scrollAmount = randInt(1500, 4000);
+      const scrollAmount = randInt(800, 2500);
       await page.mouse.move(randInt(100, 500), randInt(200, 600));
-      await page.waitForTimeout(randInt(300, 700));
+      await page.waitForTimeout(randInt(200, 500));
       await page.evaluate((amt) => window.scrollBy(0, amt), scrollAmount);
-      await randDelay(2500, 5000);
-      
-      // Wait for new articles to load after scroll
-      try {
-        await page.waitForFunction(
-          (prevCount) => document.querySelectorAll('article').length > prevCount,
-          { timeout: 5000 },
-          articlesInDOM
-        );
-      } catch (e) {
-        // Timeout is fine - just means no new articles loaded
-      }
+      await randDelay(1200, 3000);
       scrollAttempts++;
     }
 
@@ -654,4 +643,3 @@ function parseEngagementNum(str) {
   await browser.close();
   if (process.env.X_STATE && fs.existsSync(storageStatePath)) fs.unlinkSync(storageStatePath);
 })();
-
