@@ -191,6 +191,7 @@ function parseEngagementNum(str) {
 
   const collectedIds = new Set();
   let posts = [];
+  let totalFilteredOut = 0;
   const collectTarget = maxResults;
   const maxScrollAttempts = Math.max(collectTarget * 4, 80);
   const username = target.replace('@', '').trim();
@@ -480,6 +481,19 @@ function parseEngagementNum(str) {
       // Media filter
       if (mediaOnly && !raw.has_media) continue;
 
+      // Keyword/hashtag/cashtag filter: ensure post actually contains the search target
+      if ((sourceType === 'keyword' || sourceType === 'hashtag' || sourceType === 'cashtag') && target) {
+        const filterText = target.toLowerCase().replace(/[$#@]/g, '').trim();
+        const postText = (raw.text || '').toLowerCase();
+        const postHashtags = (raw.hashtags || []).map(h => h.toLowerCase().replace('#', ''));
+        const postMentions = (raw.mentions || []).map(m => m.toLowerCase().replace('@', ''));
+        const matchesFilter = postText.includes(filterText) || postHashtags.includes(filterText) || postMentions.includes(filterText);
+        if (!matchesFilter) {
+          totalFilteredOut++;
+          continue;
+        }
+      }
+
       // Profile filter: local keyword matching (bypasses X search)
       if (sourceType === 'profile_filter' && target) {
         const filterText = target.toLowerCase().replace(/[$#@]/g, '').trim();
@@ -553,7 +567,7 @@ function parseEngagementNum(str) {
       scrollAttempts++;
     }
 
-    console.log(`Done: ${posts.length} total posts so far`);
+    console.log(`Done: ${posts.length} total posts so far (filtered out by keyword: ${totalFilteredOut})`);
     if (posts.length >= collectTarget) break;
   }
 
