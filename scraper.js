@@ -464,6 +464,7 @@ function parseEngagementNum(str) {
 
     // Process results in Node.js (parsing, filtering, dedup)
     let added = 0;
+    let filteredOut = 0;
     for (const raw of newPosts) {
       if (posts.length >= collectTarget) break;
       if (collectedIds.has(raw.tweet_id)) continue;
@@ -479,6 +480,19 @@ function parseEngagementNum(str) {
 
       // Media filter
       if (mediaOnly && !raw.has_media) continue;
+
+      // Keyword/hashtag/cashtag filter: ensure post actually contains the search target
+      if ((sourceType === 'keyword' || sourceType === 'hashtag' || sourceType === 'cashtag') && target) {
+        const filterText = target.toLowerCase().replace(/[$#@]/g, '').trim();
+        const postText = (raw.text || '').toLowerCase();
+        const postHashtags = (raw.hashtags || []).map(h => h.toLowerCase().replace('#', ''));
+        const postMentions = (raw.mentions || []).map(m => m.toLowerCase().replace('@', ''));
+        const matchesFilter = postText.includes(filterText) || postHashtags.includes(filterText) || postMentions.includes(filterText);
+        if (!matchesFilter) {
+          filteredOut++;
+          continue;
+        }
+      }
 
       // Profile filter: local keyword matching (bypasses X search)
       if (sourceType === 'profile_filter' && target) {
@@ -553,7 +567,7 @@ function parseEngagementNum(str) {
       scrollAttempts++;
     }
 
-    console.log(`Done: ${posts.length} total posts so far`);
+    console.log(`Done: ${posts.length} total posts so far (filtered out by keyword: ${filteredOut})`);
     if (posts.length >= collectTarget) break;
   }
 
