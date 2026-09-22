@@ -119,7 +119,7 @@ function parseEngagementNum(str) {
     else if (filterReplies === 'replies') searchOps += '%20-is:quote%20is:reply';
     if (mediaOnly) searchOps += '%20has:media';
 
-    const sortParam = sortOrder === 'top' ? 'top' : sortOrder === 'live' ? 'live' : '';
+    const sortParam = sortOrder === 'top' ? 'top' : 'live';
 
     if (rawQuery) {
       const sep = rawQuery.includes('-is:') ? '' : '%20';
