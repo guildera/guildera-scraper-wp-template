@@ -191,6 +191,7 @@ function parseEngagementNum(str) {
 
   const collectedIds = new Set();
   let posts = [];
+  let totalFilteredOut = 0;
   const collectTarget = maxResults;
   const maxScrollAttempts = Math.max(collectTarget * 4, 80);
   const username = target.replace('@', '').trim();
@@ -464,7 +465,6 @@ function parseEngagementNum(str) {
 
     // Process results in Node.js (parsing, filtering, dedup)
     let added = 0;
-    let filteredOut = 0;
     for (const raw of newPosts) {
       if (posts.length >= collectTarget) break;
       if (collectedIds.has(raw.tweet_id)) continue;
@@ -489,7 +489,7 @@ function parseEngagementNum(str) {
         const postMentions = (raw.mentions || []).map(m => m.toLowerCase().replace('@', ''));
         const matchesFilter = postText.includes(filterText) || postHashtags.includes(filterText) || postMentions.includes(filterText);
         if (!matchesFilter) {
-          filteredOut++;
+          totalFilteredOut++;
           continue;
         }
       }
@@ -567,7 +567,7 @@ function parseEngagementNum(str) {
       scrollAttempts++;
     }
 
-    console.log(`Done: ${posts.length} total posts so far (filtered out by keyword: ${filteredOut})`);
+    console.log(`Done: ${posts.length} total posts so far (filtered out by keyword: ${totalFilteredOut})`);
     if (posts.length >= collectTarget) break;
   }
 
