@@ -483,11 +483,11 @@ function parseEngagementNum(str) {
 
       // Keyword/hashtag/cashtag filter: ensure post actually contains the search target
       if ((sourceType === 'keyword' || sourceType === 'hashtag' || sourceType === 'cashtag') && target) {
-        const filterText = target.toLowerCase().replace(/[$#@]/g, '').trim();
+        const keyword = target.split(/\s+/)[0].toLowerCase().replace(/[$#@]/g, '').trim();
         const postText = (raw.text || '').toLowerCase();
         const postHashtags = (raw.hashtags || []).map(h => h.toLowerCase().replace('#', ''));
         const postMentions = (raw.mentions || []).map(m => m.toLowerCase().replace('@', ''));
-        const matchesFilter = postText.includes(filterText) || postHashtags.includes(filterText) || postMentions.includes(filterText);
+        const matchesFilter = postText.includes(keyword) || postHashtags.includes(keyword) || postMentions.includes(keyword);
         if (!matchesFilter) {
           totalFilteredOut++;
           continue;
